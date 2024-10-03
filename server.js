@@ -26,7 +26,7 @@ admin.initializeApp({
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://btms-8eqb.vercel.app' : 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? 'https://barangaypatrol.lgu1.com' : 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
