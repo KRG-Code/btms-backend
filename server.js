@@ -29,7 +29,7 @@ module.exports = { bucket }; // Export the bucket for use in upload.js
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://your-frontend-url.com' : 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? 'https://btms-mu.vercel.app' : 'http://localhost:3000',
 }));
 
 // Serve uploaded images
@@ -56,11 +56,11 @@ app.use((err, req, res, next) => {
   res.status(500).send({ message: 'An unexpected error occurred', error: err.message });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// // Start server
+// const PORT = process.env.PORT || 5000;
+// const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Graceful shutdown on SIGTERM
-process.on('SIGTERM', () => {
-  server.close(() => console.log('Process terminated'));
-});
+// // Graceful shutdown on SIGTERM
+// process.on('SIGTERM', () => {
+//   server.close(() => console.log('Process terminated'));
+// });
