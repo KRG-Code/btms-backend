@@ -23,17 +23,15 @@ admin.initializeApp({
   storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
 });
 
-const bucket = admin.storage().bucket();
-module.exports = { bucket }; // Export the bucket for use in upload.js
-
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://btms-8eqb.vercel.app' : 'http://localhost:3000', // Remove trailing slash
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow common methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
-  credentials: true, // Enable credentials (if needed for cookies or authentication)
+  origin: process.env.NODE_ENV === 'production' ? 'https://btms-8eqb.vercel.app' : 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
+
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -47,8 +45,9 @@ app.use('/api/equipments', equipmentRoutes);
 
 // Tanod Rating Routes
 const tanodRatingRoutes = require('./routes/authRoutes');
-app.use('/api/tanods', tanodRatingRoutes); // Add this line for Tanod ratings
+app.use('/api/tanods', tanodRatingRoutes);
 
+// Notifications and Messages Routes
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 
@@ -58,11 +57,5 @@ app.use((err, req, res, next) => {
   res.status(500).send({ message: 'An unexpected error occurred', error: err.message });
 });
 
-// // Start server
-// const PORT = process.env.PORT || 5000;
-// const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// // Graceful shutdown on SIGTERM
-// process.on('SIGTERM', () => {
-//   server.close(() => console.log('Process terminated'));
-// });
+// Export the app for Vercel
+module.exports = app; // Change this line to export the app directly
