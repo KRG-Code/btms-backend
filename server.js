@@ -29,9 +29,11 @@ module.exports = { bucket }; // Export the bucket for use in upload.js
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? 'https://btms-8eqb.vercel.app/' : 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? 'https://btms-8eqb.vercel.app' : 'http://localhost:3000', // Remove trailing slash
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow common methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
+  credentials: true, // Enable credentials (if needed for cookies or authentication)
 }));
-
 // Serve uploaded images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
