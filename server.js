@@ -51,6 +51,16 @@ app.use('/api/tanods', tanodRatingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messageRoutes);
 
+// Serve static files from the React app
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client/build')));
+
+  // Handle client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -58,4 +68,4 @@ app.use((err, req, res, next) => {
 });
 
 // Export the app for Vercel
-module.exports = app; // Change this line to export the app directly
+module.exports = app;
