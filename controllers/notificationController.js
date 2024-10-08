@@ -34,6 +34,18 @@ exports.getUnreadNotifications = async (req, res) => {
     }
   };
 
+// Delete a notification
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    await Notification.findByIdAndDelete(notificationId);
+    res.status(200).json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Create a new notification (called when a schedule is added)
 exports.createNotification = async (userId, message) => {
   try {

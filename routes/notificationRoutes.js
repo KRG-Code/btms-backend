@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware');
-const { getNotifications, markNotificationsAsRead, getUnreadNotifications } = require('../controllers/notificationController');
+const { getNotifications, markNotificationsAsRead, getUnreadNotifications, deleteNotification } = require('../controllers/notificationController');
 
 const router = express.Router();
 
@@ -13,5 +13,8 @@ router.post('/mark-read', protect, markNotificationsAsRead);
 router.get('/unread', protect, getUnreadNotifications); // Route to get unread notifications
 
 router.post('/mark-read', protect, markNotificationsAsRead);
+
+// Route to delete a notification
+router.delete('/:notificationId', protect, deleteNotification);
 
 module.exports = router;
