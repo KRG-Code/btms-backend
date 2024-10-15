@@ -189,54 +189,81 @@ exports.loginResident = async (req, res) => {
   }
 };
 
+// authController.js
+
 exports.loginTanod = async (req, res) => {
   const { username, password } = req.body; // Extract username and password from request body
   try {
     const user = await User.findOne({ username }); // Find user by username
 
-    // Verify password and user type
-    if (
-      (user &&
-        (await bcrypt.compare(password, user.password)) &&
-        user.userType === "tanod") ||
-      user.userType === "admin"
-    ) {
-      return res.json({
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        userType: user.userType,
-        token: generateToken(user._id), // Use the generateToken function
-        profilePicture: user.profilePicture,
-      });
+    // If user is not found, return an error
+    if (!user) {
+      return res.status(401).json({ message: "Invalid username or password" });
     }
 
-    // Invalid credentials
-    res.status(401).json({ message: "Invalid username or password" });
+    // Verify password
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    // Check if the user type is either "tanod" or "admin"
+    if (user.userType !== "tanod" && user.userType !== "admin") {
+      return res.status(403).json({ message: "Access denied: User type not authorized" });
+    }
+
+    // If the password matches and user type is valid, return user info and token
+    return res.json({
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      userType: user.userType,
+      token: generateToken(user._id), // Use the generateToken function
+      profilePicture: user.profilePicture,
+    });
   } catch (error) {
     console.error("Login Error:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+
 // Change Password
 exports.changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+
   try {
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    if (!(await bcrypt.compare(currentPassword, user.password)))
+    console.log("Current Password Attempted:", currentPassword);
+    console.log("New Password Attempted:", newPassword);
+    
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
       return res.status(400).json({ message: "Current password is incorrect" });
+    }
 
-    user.password = await bcrypt.hash(newPassword, 10); // Hash new password
-    await user.save();
+    // Set the new password directly
+    user.password = newPassword; // Set new password directly
+
+    // Save the user, which will trigger the pre-save hook
+    const savedUser = await user.save();
+
+    console.log("User before save:", user);
+    console.log("User after save:", savedUser);
+    
     res.json({ message: "Password updated successfully" });
   } catch (error) {
+    console.error("Change Password Error:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 // Function to add equipment
 exports.addEquipment = async (req, res) => {

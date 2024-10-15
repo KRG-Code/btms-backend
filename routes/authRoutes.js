@@ -49,7 +49,7 @@ router.post('/registertanod', [
 module.exports = router;
 
 
-router.post('/login/resident', loginResident); // For residents
+router.post('/login/resident',  loginResident); // For residents
 
 router.post('/login/tanod', loginTanod); // For Tanods
 
