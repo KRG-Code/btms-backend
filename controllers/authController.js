@@ -239,9 +239,6 @@ exports.changePassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    console.log("Current Password Attempted:", currentPassword);
-    console.log("New Password Attempted:", newPassword);
     
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
@@ -252,10 +249,7 @@ exports.changePassword = async (req, res) => {
     user.password = newPassword; // Set new password directly
 
     // Save the user, which will trigger the pre-save hook
-    const savedUser = await user.save();
-
-    console.log("User before save:", user);
-    console.log("User after save:", savedUser);
+    await user.save();
     
     res.json({ message: "Password updated successfully" });
   } catch (error) {
@@ -263,6 +257,7 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 // Function to add equipment
