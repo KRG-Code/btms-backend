@@ -8,24 +8,51 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { validationResult } = require("express-validator");
 const { bucket } = require("../config/firebaseAdmin");
+const axios = require('axios');
+const fetch = require('node-fetch');
 
 // Generate JWT token
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
-// Register a new user
+// reCAPTCHA verification function (outside of registerUser)
+const verifyRecaptcha = async (token) => {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY; // Ensure this is set in your backend environment
+  const response = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `secret=${secretKey}&response=${token}`,
+  });
+  const data = await response.json();
+
+  console.log("reCAPTCHA Verification Response:", data); // For debugging
+
+  // Only check for success
+  return data.success;
+};
+
+// Modify the existing registerUser function
 exports.registerUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
-  const { firstName, lastName, username, email, password, userType, ...rest } =
-    req.body;
+  const { firstName, lastName, username, email, password, userType, recaptchaToken, ...rest } = req.body;
+
+  // Verify reCAPTCHA
+  const recaptchaValid = await verifyRecaptcha(recaptchaToken);
+  if (!recaptchaValid) {
+    console.log("reCAPTCHA validation failed."); // Log failure reason
+    return res.status(400).json({ message: "reCAPTCHA validation failed" });
+  }
 
   try {
-    if (await User.findOne({ email }))
+    // Check if user with email already exists
+    if (await User.findOne({ email })) {
       return res.status(400).json({ message: "User already exists" });
+    }
 
+    // Create a new user
     const user = await User.create({
       firstName,
       lastName,
@@ -35,6 +62,8 @@ exports.registerUser = async (req, res) => {
       userType,
       ...rest,
     });
+
+    // Send response with the user info and token
     res.status(201).json({
       _id: user._id,
       firstName: user.firstName,
