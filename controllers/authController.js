@@ -4,6 +4,7 @@ const Equipment = require("../models/Equipment");
 const TanodRating = require("../models/Rating");
 const Schedule = require("../models/Schedule");
 const Notification = require('../models/Notification');
+const Inventory = require("../models/Inventory");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { validationResult } = require("express-validator");
@@ -294,15 +295,28 @@ exports.addEquipment = async (req, res) => {
   const { name, borrowDate, returnDate, imageUrl } = req.body;
 
   try {
+    // Check if the inventory item exists and has sufficient quantity
+    const inventoryItem = await Inventory.findOne({ name });
+    if (!inventoryItem || inventoryItem.quantity <= 0) {
+      return res.status(400).json({ message: "Item unavailable in inventory." });
+    }
+
+    // Create a new equipment entry
     const newEquipment = new Equipment({
       name,
       borrowDate,
       returnDate,
       imageUrl,
-      user: req.user.id, // Assuming user is authenticated
+      user: req.user.id,
     });
 
+    // Save equipment to indicate it has been borrowed
     const savedEquipment = await newEquipment.save();
+
+    // Decrease inventory quantity by 1
+    inventoryItem.quantity -= 1;
+    await inventoryItem.save();
+
     res.status(201).json(savedEquipment);
   } catch (error) {
     console.error("Error saving equipment:", error);
@@ -313,10 +327,7 @@ exports.addEquipment = async (req, res) => {
 // Function to get all equipment
 exports.getEquipments = async (req, res) => {
   try {
-    const equipments = await Equipment.find({ user: req.user._id }).populate(
-      "user",
-      "firstName lastName"
-    );
+    const equipments = await Equipment.find({ user: req.user._id }).populate("user", "firstName lastName");
     res.status(200).json(equipments);
   } catch (error) {
     console.error("Error fetching equipments:", error);
@@ -324,7 +335,7 @@ exports.getEquipments = async (req, res) => {
   }
 };
 
-// Update equipment by ID
+// Update equipment return date and increment inventory quantity
 exports.updateEquipment = async (req, res) => {
   try {
     const equipment = await Equipment.findById(req.params.id);
@@ -333,12 +344,21 @@ exports.updateEquipment = async (req, res) => {
       return res.status(404).json({ message: "Equipment not found" });
     }
 
-    equipment.returnDate = req.body.returnDate; // Update return date
+    // Update return date
+    equipment.returnDate = req.body.returnDate;
     const updatedEquipment = await equipment.save();
+
+    // Increment inventory quantity by 1 after return
+    const inventoryItem = await Inventory.findOne({ name: equipment.name });
+    if (inventoryItem) {
+      inventoryItem.quantity += 1;
+      await inventoryItem.save();
+    }
 
     res.json(updatedEquipment);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error updating equipment:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

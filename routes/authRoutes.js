@@ -1,4 +1,4 @@
-// authRoutes.js
+// routes/authRoutes.js
 const express = require('express');
 const { body } = require('express-validator');
 const {
@@ -15,6 +15,8 @@ const {
   deleteRating,
   deleteUser,
   getEquipments,
+  updateEquipment,
+  addEquipment,
   changePassword,
   createSchedule,
   getAllSchedules,
@@ -22,14 +24,15 @@ const {
   updateSchedule,
   deleteSchedule,
   getSchedulesForTanod,
-  getScheduleMembers
+  getScheduleMembers,
 } = require('../controllers/authController');
 
+const { getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = require("../controllers/inventoryController");
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// User registration route
+// User routes
 router.post('/register', [
   body('firstName').notEmpty().withMessage('First Name is required'),
   body('lastName').notEmpty().withMessage('Last Name is required'),
@@ -37,7 +40,6 @@ router.post('/register', [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ], registerUser);
 
-// Tanod registration route
 router.post('/registertanod', [
   body('firstName').notEmpty().withMessage('First Name is required'),
   body('lastName').notEmpty().withMessage('Last Name is required'),
@@ -46,32 +48,30 @@ router.post('/registertanod', [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ], registerTanod);
 
-module.exports = router;
+router.post('/login/resident', loginResident); // For residents
+router.post('/login/tanod', loginTanod);       // For Tanods
 
+// User Profile & Ratings Routes
+router.put('/update', protect, updateUserProfile);          // Update user profile
+router.put('/change-password', protect, changePassword);    // Change user password
+router.get('/:tanodId/ratings', protect, getTanodRatings);  // Ratings for specific Tanod
+router.get('/my-ratings', protect, getUserRatings);         // Current user's ratings
+router.get('/users', protect, getAllUserProfiles);          // Get all user profiles
+router.get('/me', protect, getUserProfile);                 // Get current user profile
+router.delete('/ratings/:ratingId', protect, deleteRating); // Delete a rating
+router.delete('/users/:userId', protect, deleteUser);       // Delete user
 
-router.post('/login/resident',  loginResident); // For residents
+// Equipment Routes
+router.get('/equipments', protect, getEquipments); // Get all borrowed equipments
+router.post('/equipments', protect, addEquipment); // Borrow equipment
+router.put('/equipments/:id', protect, updateEquipment); // Return equipment
 
-router.post('/login/tanod', loginTanod); // For Tanods
+// Inventory Routes
+router.get('/inventory', protect, getInventory);          // Get inventory
+router.post('/inventory', protect, addInventoryItem);     // Add item to inventory
+router.put('/inventory/:id', protect, updateInventoryItem); // Update item
+router.delete('/inventory/:id', protect, deleteInventoryItem); // Delete item
 
-router.post('/:tanodId/rate', protect, rateTanod); //Upload tanod rating
-
-router.put('/update', protect, updateUserProfile); // Update user profile
-
-router.put('/change-password', protect, changePassword); // Change user password
-
-router.get('/equipments', protect, getEquipments); 
-
-router.get('/:tanodId/ratings', protect, getTanodRatings);// Route to get ratings for a specific Tanod
-
-router.get('/my-ratings', protect, getUserRatings);  // Get current user's ratings
-
-router.get('/users', protect, getAllUserProfiles); //Get all user profile
-
-router.get('/me', protect, getUserProfile); // Get current user profile
-
-router.delete('/ratings/:ratingId', protect, deleteRating);  // Delete a rating
-
-router.delete('/users/:userId', protect, deleteUser); //delete user
 
 // Schedule routes
 router.post('/schedule', protect, createSchedule);
@@ -81,8 +81,5 @@ router.put('/schedule/:scheduleId', protect, updateSchedule);
 router.delete('/schedule/:scheduleId', protect, deleteSchedule);
 router.get('/schedule/:id/members', protect, getScheduleMembers);
 router.get('/tanod-schedules/:userId', protect, getSchedulesForTanod);
-
-
-
 
 module.exports = router;
