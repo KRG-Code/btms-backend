@@ -6,6 +6,7 @@ const path = require('path');
 const admin = require('firebase-admin');
 const notificationRoutes = require('./routes/notificationRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const polygonRoutes = require('./routes/polygonRoutes');
 
 dotenv.config(); // Load environment variables from .env
 const app = express();
@@ -62,6 +63,8 @@ app.use('/api/auth', authRoutes);
 // Equipment Routes
 const equipmentRoutes = require('./routes/authEquipment');
 app.use('/api/equipments', equipmentRoutes);
+
+app.use('/api/polygons', polygonRoutes);
 
 // Tanod Rating Routes
 const tanodRatingRoutes = require('./routes/authRoutes');
