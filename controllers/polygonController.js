@@ -10,6 +10,20 @@ exports.getPolygons = async (req, res) => {
   }
 };
 
+// Fetch a single polygon by ID
+exports.getPolygonById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const polygon = await Polygon.findById(id);
+    if (!polygon) {
+      return res.status(404).json({ message: "Polygon not found" });
+    }
+    res.status(200).json(polygon);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to retrieve polygon", error: error.message });
+  }
+};
+
 // Add a new polygon
 exports.addPolygon = async (req, res) => {
   const { legend, color, coordinates } = req.body;

@@ -492,19 +492,22 @@ exports.getTanodRatings = async (req, res) => {
 
 // Create a new schedule
 exports.createSchedule = async (req, res) => {
-  const { unit, tanods, startTime, endTime } = req.body;
+  const { unit, tanods, startTime, endTime, patrolArea } = req.body;
 
   try {
     if (!unit || !tanods || !startTime || !endTime) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Create the schedule
+    const status = new Date(startTime) > new Date() ? 'Upcoming' : 'Ongoing';
+
     const schedule = new Schedule({
       unit,
       tanods,
       startTime,
       endTime,
+      patrolArea,
+      status,
     });
 
     await schedule.save();
@@ -530,7 +533,7 @@ exports.getAllSchedules = async (req, res) => {
     const schedules = await Schedule.find().populate(
       "tanods",
       "firstName lastName"
-    ); // Populate Tanod names
+    ).populate("patrolArea", "legend"); // Populate patrolArea's legend field
     res.status(200).json(schedules);
   } catch (error) {
     console.error("Error fetching schedules:", error.message);
@@ -544,7 +547,7 @@ exports.getScheduleById = async (req, res) => {
     const schedule = await Schedule.findById(req.params.scheduleId).populate(
       "tanods",
       "firstName lastName"
-    );
+    ).populate("patrolArea", "legend"); // Populate patrolArea's legend field
     if (!schedule) {
       return res.status(404).json({ message: "Schedule not found" });
     }
@@ -557,7 +560,7 @@ exports.getScheduleById = async (req, res) => {
 
 // Update a schedule
 exports.updateSchedule = async (req, res) => {
-  const { unit, tanods, startTime, endTime } = req.body;
+  const { unit, tanods, startTime, endTime, patrolArea } = req.body;
 
   try {
     const schedule = await Schedule.findById(req.params.scheduleId);
@@ -570,6 +573,8 @@ exports.updateSchedule = async (req, res) => {
     schedule.tanods = tanods || schedule.tanods;
     schedule.startTime = startTime || schedule.startTime;
     schedule.endTime = endTime || schedule.endTime;
+    schedule.patrolArea = patrolArea || schedule.patrolArea;
+    schedule.status = new Date(startTime) > new Date() ? 'Upcoming' : 'Ongoing';
 
     await schedule.save();
     
@@ -642,5 +647,104 @@ exports.getSchedulesForTanod = async (req, res) => {
   } catch (error) {
     console.error("Error fetching schedules for Tanod:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update patrol area of a schedule
+exports.updatePatrolArea = async (req, res) => {
+  const { id } = req.params;
+  const { patrolArea } = req.body;
+
+  try {
+    const schedule = await Schedule.findById(id);
+    if (!schedule) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+
+    schedule.patrolArea = patrolArea;
+    await schedule.save();
+
+    res.status(200).json({ message: "Patrol area assigned successfully", schedule });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to assign patrol area", error: error.message });
+  }
+};
+
+// Update patrol status to 'Ongoing' and member status to 'Started'
+exports.startPatrol = async (req, res) => {
+  const { scheduleId } = req.params;
+  const userId = req.user._id;
+
+  try {
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+
+    schedule.status = 'Ongoing';
+    const memberStatus = schedule.patrolStatus.find(status => status.tanodId.toString() === userId.toString());
+    if (memberStatus) {
+      memberStatus.status = 'Started';
+      memberStatus.startTime = new Date();
+    } else {
+      schedule.patrolStatus.push({ tanodId: userId, status: 'Started', startTime: new Date() });
+    }
+
+    await schedule.save();
+
+    res.status(200).json({ message: "Patrol started", schedule });
+  } catch (error) {
+    console.error("Error starting patrol:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update patrol status to 'Completed' if all members have ended the patrol
+exports.endPatrol = async (req, res) => {
+  const { scheduleId } = req.params;
+  const userId = req.user._id;
+
+  try {
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) {
+      return res.status(404).json({ message: "Schedule not found" });
+    }
+
+    const memberStatus = schedule.patrolStatus.find(status => status.tanodId.toString() === userId.toString());
+    if (memberStatus) {
+      memberStatus.status = 'Completed';
+      memberStatus.endTime = new Date();
+    }
+
+    // Check if all members have ended the patrol
+    const allMembersEnded = schedule.patrolStatus.every(status => status.status === 'Completed' || status.status === 'Absent');
+
+    if (allMembersEnded) {
+      schedule.status = 'Completed';
+    }
+
+    await schedule.save();
+
+    res.status(200).json({ message: "Patrol ended", schedule });
+  } catch (error) {
+    console.error("Error ending patrol:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Function to automatically update the status when the end time is reached or passed
+exports.updateScheduleStatus = async () => {
+  try {
+    const schedules = await Schedule.find({ status: { $in: ['Upcoming', 'Ongoing'] } });
+    const now = new Date();
+
+    for (const schedule of schedules) {
+      if (new Date(schedule.endTime) <= now) {
+        schedule.status = 'Completed';
+        await schedule.save();
+      }
+    }
+  } catch (error) {
+    console.error("Error updating schedule status:", error.message);
   }
 };

@@ -22,6 +22,37 @@ const scheduleSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
+  patrolArea: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Polygon', // Referencing the Polygon (Patrol Area)
+  },
+  status: {
+    type: String,
+    enum: ['Upcoming', 'Ongoing', 'Completed'],
+    default: 'Upcoming',
+  },
+  patrolStatus: [
+    {
+      tanodId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ['Not Started', 'Started', 'Completed', 'Absent'],
+        default: 'Not Started',
+      },
+      startTime: {
+        type: Date,
+        default: null,
+      },
+      endTime: {
+        type: Date,
+        default: null,
+      },
+    },
+  ],
 }, { timestamps: true });
 
 module.exports = mongoose.model("Schedule", scheduleSchema);

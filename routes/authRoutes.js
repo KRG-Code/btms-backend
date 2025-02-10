@@ -25,6 +25,10 @@ const {
   deleteSchedule,
   getSchedulesForTanod,
   getScheduleMembers,
+  updatePatrolArea,
+  startPatrol,
+  endPatrol,
+  updateScheduleStatus,
 } = require('../controllers/authController');
 
 const { getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = require("../controllers/inventoryController");
@@ -72,14 +76,19 @@ router.post('/inventory', protect, addInventoryItem);     // Add item to invento
 router.put('/inventory/:id', protect, updateInventoryItem); // Update item
 router.delete('/inventory/:id', protect, deleteInventoryItem); // Delete item
 
-
 // Schedule routes
 router.post('/schedule', protect, createSchedule);
 router.get('/schedules', protect, getAllSchedules);
 router.get('/schedule/:scheduleId', protect, getScheduleById);
 router.put('/schedule/:scheduleId', protect, updateSchedule);
+router.put('/schedule/:id/patrol-area', protect, updatePatrolArea); // Update patrol area of a schedule
 router.delete('/schedule/:scheduleId', protect, deleteSchedule);
 router.get('/schedule/:id/members', protect, getScheduleMembers);
-router.get('/tanod-schedules/:userId', protect, getSchedulesForTanod);
+router.get('/tanod-schedules/:userId', protect, getSchedulesForTanod); // Ensure this route is defined
+router.put('/schedules/update-status', protect, updateScheduleStatus); // Add this route
+
+// Patrol routes
+router.put('/schedule/:scheduleId/start-patrol', protect, startPatrol);
+router.put('/schedule/:scheduleId/end-patrol', protect, endPatrol);
 
 module.exports = router;
