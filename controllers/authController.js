@@ -443,7 +443,7 @@ exports.deleteRating = async (req, res) => {
     res.json({ message: "Rating deleted successfully" });
   } catch (error) {
     console.error("Error deleting rating:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -634,10 +634,10 @@ exports.getSchedulesForTanod = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const schedules = await Schedule.find({ tanods: userId }).populate(
-      "tanods",
-      "firstName lastName profilePicture contactNumber"
-    );
+    const schedules = await Schedule.find({ tanods: userId })
+      .populate("tanods", "firstName lastName profilePicture contactNumber")
+      .populate("patrolArea", "legend coordinates color"); // Populate patrolArea with necessary fields
+
     if (!schedules.length) {
       return res
         .status(404)

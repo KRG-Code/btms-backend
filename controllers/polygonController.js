@@ -78,3 +78,14 @@ exports.deletePolygon = async (req, res) => {
     res.status(500).json({ message: "Failed to delete polygon", error: error.message });
   }
 };
+
+// Fetch polygons by patrol area ID
+exports.getPolygonsByPatrolAreaId = async (req, res) => {
+  const { patrolAreaId } = req.params;
+  try {
+    const polygons = await Polygon.find({ patrolArea: patrolAreaId });
+    res.status(200).json(polygons);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to retrieve polygons", error: error.message });
+  }
+};

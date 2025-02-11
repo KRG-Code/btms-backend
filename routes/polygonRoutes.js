@@ -5,7 +5,8 @@ const {
   addPolygon,
   updatePolygon,
   deletePolygon,
-  getPolygonById, // Import the controller function
+  getPolygonById,
+  getPolygonsByPatrolAreaId, // Import the controller function
 } = require("../controllers/polygonController");
 
 const router = express.Router();
@@ -14,7 +15,10 @@ const router = express.Router();
 router.get("/", protect, getPolygons);
 
 // Fetch a single polygon by ID
-router.get("/:id", protect, getPolygonById); // Add this route
+router.get("/:id", protect, getPolygonById);
+
+// Fetch polygons by patrol area ID
+router.get("/patrolArea/:patrolAreaId", protect, getPolygonsByPatrolAreaId); // Add this route
 
 // Add a new polygon
 router.post("/", protect, addPolygon);
