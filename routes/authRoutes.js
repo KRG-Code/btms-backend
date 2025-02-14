@@ -29,6 +29,7 @@ const {
   startPatrol,
   endPatrol,
   updateScheduleStatus,
+  savePatrolLogs,
 } = require('../controllers/authController');
 
 const { getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } = require("../controllers/inventoryController");
@@ -90,5 +91,6 @@ router.put('/schedules/update-status', protect, updateScheduleStatus); // Add th
 // Patrol routes
 router.put('/schedule/:scheduleId/start-patrol', protect, startPatrol);
 router.put('/schedule/:scheduleId/end-patrol', protect, endPatrol);
+router.post('/save-patrol-logs', protect, savePatrolLogs);
 
 module.exports = router;

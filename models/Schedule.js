@@ -53,6 +53,23 @@ const scheduleSchema = new mongoose.Schema({
       },
     },
   ],
+  patrolLogs: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+      },
+      log: {
+        type: String,
+        required: true,
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 }, { timestamps: true });
 
 module.exports = mongoose.model("Schedule", scheduleSchema);
